@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 密码学评测系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 欢迎区域 -->
+    <div class="col-12">
+        <div class="hero-section bg-gradient-primary text-white rounded-4 p-5 mb-5">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="fas fa-shield-alt"></i>
+                        密码学评测系统
+                    </h1>
+                    <p class="lead mb-4">
+                        基于大模型和GMT标准的智能化密码学产品评测平台，提供全流程的评测、审核和认证服务。
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="{{ url_for('web.evaluations') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-play"></i> 开始评测
+                        </a>
+                        <a href="{{ url_for('web.knowledge') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-book"></i> 知识库
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <i class="fas fa-microchip fa-8x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- 功能模块卡片 -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-primary text-white mb-3">
+                    <i class="fas fa-upload fa-2x"></i>
+                </div>
+                <h5 class="card-title">证据识别</h5>
+                <p class="card-text">
+                    支持图片、PDF、Word等多种格式的证据文件上传和智能内容提取。
+                </p>
+                <a href="{{ url_for('web.upload') }}" class="btn btn-outline-primary">
+                    上传证据 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-success text-white mb-3">
+                    <i class="fas fa-brain fa-2x"></i>
+                </div>
+                <h5 class="card-title">智能判定</h5>
+                <p class="card-text">
+                    基于GMT标准的智能化评测判定，自动生成详细的评测报告。
+                </p>
+                <a href="{{ url_for('web.evaluations') }}" class="btn btn-outline-success">
+                    查看评测 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-info text-white mb-3">
+                    <i class="fas fa-file-alt fa-2x"></i>
+                </div>
+                <h5 class="card-title">报告评审</h5>
+                <p class="card-text">
+                    自动化报告格式检查、内容完整性验证和技术指标合规性审核。
+                </p>
+                <a href="{{ url_for('web.reports') }}" class="btn btn-outline-info">
+                    查看报告 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 feature-card">
+            <div class="card-body text-center">
+                <div class="feature-icon bg-warning text-white mb-3">
+                    <i class="fas fa-question-circle fa-2x"></i>
+                </div>
+                <h5 class="card-title">知识问答</h5>
+                <p class="card-text">
+                    基于GMT标准文档的智能问答系统，支持自然语言查询和考题生成。
+                </p>
+                <a href="{{ url_for('web.knowledge') }}" class="btn btn-outline-warning">
+                    知识查询 <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统统计 -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="mb-4">
+            <i class="fas fa-chart-bar"></i> 系统概览
+        </h3>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">评测任务</h6>
+                        <h3 class="mb-0" id="total-evaluations">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tasks fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">证据文件</h6>
+                        <h3 class="mb-0" id="total-evidences">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">评测报告</h6>
+                        <h3 class="mb-0" id="total-reports">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">待处理</h6>
+                        <h3 class="mb-0" id="pending-evaluations">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最新动态 -->
+<div class="row mt-5">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock"></i> 最近评测
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recent-evaluations">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-question"></i> 常见问题
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                系统支持哪些文件格式？
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                系统支持图片（JPG、PNG、GIF）、PDF文档、Word文档（DOCX）等格式的证据文件上传和处理。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                评测标准是什么？
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                系统基于国家密码管理局发布的GMT系列标准进行评测，包括GMT 0010-2012等重要标准文档。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                如何开始评测？
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                首先创建评测任务，然后上传相关证据文件，系统会自动进行内容识别和智能评测，最终生成详细报告。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 加载系统统计数据
+document.addEventListener('DOMContentLoaded', function() {
+    // 模拟加载统计数据
+    setTimeout(() => {
+        document.getElementById('total-evaluations').textContent = '12';
+        document.getElementById('total-evidences').textContent = '34';
+        document.getElementById('total-reports').textContent = '8';
+        document.getElementById('pending-evaluations').textContent = '3';
+    }, 1000);
+
+    // 加载最近评测
+    loadRecentEvaluations();
+});
+
+function loadRecentEvaluations() {
+    fetch('/api/evaluations')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('recent-evaluations');
+            if (data.success && data.data.length > 0) {
+                const recent = data.data.slice(0, 5);
+                container.innerHTML = recent.map(eval => `
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <h6 class="mb-1">${eval.title}</h6>
+                            <small class="text-muted">${new Date(eval.created_at).toLocaleDateString()}</small>
+                        </div>
+                        <span class="badge bg-${getStatusColor(eval.status)}">${getStatusText(eval.status)}</span>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-muted text-center">暂无评测任务</p>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('recent-evaluations').innerHTML = '<p class="text-danger text-center">加载失败</p>';
+        });
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'warning',
+        'processing': 'info',
+        'completed': 'success',
+        'failed': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function getStatusText(status) {
+    const texts = {
+        'pending': '待处理',
+        'processing': '处理中',
+        'completed': '已完成',
+        'failed': '失败'
+    };
+    return texts[status] || status;
+}
+</script>
+{% endblock %}

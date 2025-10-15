@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}注册 - 密码学评测系统{% endblock %}
+{% block content %}
+<h2>用户注册</h2>
+<form method="post">
+    <label>用户名：</label><input type="text" name="username"><br>
+    <label>邮箱：</label><input type="email" name="email"><br>
+    <label>密码：</label><input type="password" name="password"><br>
+    <button type="submit">注册</button>
+    <a href="{{ url_for('web.login') }}">已有账号？登录</a>
+</form>
+{% if error %}<p style="color:red">{{ error }}</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}评测详情 - 密码学评测系统{% endblock %}
+{% block content %}
+<h2>评测任务详情</h2>
+<p><strong>标题：</strong> {{ evaluation.title }}</p>
+<p><strong>描述：</strong> {{ evaluation.description }}</p>
+<p><strong>状态：</strong> {{ evaluation.status }}</p>
+<p><strong>创建时间：</strong> {{ evaluation.created_at }}</p>
+
+<h3>证据文件</h3>
+<ul>
+    {% for evidence in evidences %}
+    <li>
+        <strong>{{ evidence.original_filename }}</strong> ({{ evidence.file_type }}, {{ evidence.file_size }}字节)<br>
+        <em>内容预览：</em> {{ evidence.extracted_text[:200] }}...
+    </li>
+    {% else %}
+    <li>暂无证据文件。</li>
+    {% endfor %}
+</ul>
+
+<h3>报告</h3>
+<ul>
+    {% for report in reports %}
+    <li>
+        <strong>{{ report.title }}</strong> - 状态: {{ report.status }}<br>
+        <em>摘要：</em> {{ report.summary }}<br>
+        <a href="{{ url_for('web.report_detail', report_id=report.id) }}">查看详情</a>
+    </li>
+    {% else %}
+    <li>暂无报告。</li>
+    {% endfor %}
+</ul>
+{% endblock %}

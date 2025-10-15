@@ -1,0 +1,56 @@
+# Web框架
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.5
+
+# 数据库
+SQLAlchemy==2.0.21
+
+# 向量数据库
+chromadb==0.4.15
+sentence-transformers==2.2.2
+
+# 文档处理
+PyMuPDF==1.23.8
+python-docx==0.8.11
+pillow==10.0.1
+
+# OCR
+easyocr==1.7.0
+pytesseract==0.3.10
+
+# HTTP请求
+requests==2.31.0
+httpx==0.25.0
+
+# 数据处理
+pandas==2.1.2
+numpy==1.24.3
+
+# 环境配置
+python-decouple==3.8
+python-dotenv==1.0.0
+
+# 日志
+loguru==0.7.2
+
+# 类型提示
+typing-extensions==4.8.0
+
+# 开发工具
+pytest==7.4.2
+black==23.9.1
+flake8==6.1.0
+
+# 异步支持
+aiohttp==3.8.6
+
+# JSON处理
+ujson==5.8.0
+
+# 时间处理
+python-dateutil==2.8.2
+
+# 加密
+cryptography==41.0.7

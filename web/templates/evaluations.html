@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}评测任务列表 - 密码学评测系统{% endblock %}
+
+{% block content %}
+<h2>评测任务列表</h2>
+<ul>
+    {% for eval in evaluations %}
+    <li>
+        <a href="{{ url_for('web.evaluation_detail', eval_id=eval.id) }}">{{ eval.title }}</a>
+        <span>状态: {{ eval.status }}</span>
+        <span>创建时间: {{ eval.created_at }}</span>
+    </li>
+    {% else %}
+    <li>暂无评测任务。</li>
+    {% endfor %}
+</ul>
+{% endblock %}

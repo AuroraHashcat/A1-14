@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}报告详情 - 密码学评测系统{% endblock %}
+{% block content %}
+<h2>报告详情</h2>
+<p><strong>标题：</strong> {{ report.title }}</p>
+<p><strong>状态：</strong> {{ report.status }}</p>
+<p><strong>评分：</strong> {{ report.score }}</p>
+<p><strong>创建时间：</strong> {{ report.created_at }}</p>
+<p><strong>摘要：</strong> {{ report.summary }}</p>
+<h3>报告内容</h3>
+<pre style="white-space: pre-wrap;">{{ report.content }}</pre>
+<h3>建议和改进意见</h3>
+<pre style="white-space: pre-wrap;">{{ report.recommendations }}</pre>
+{% endblock %}
