@@ -20,6 +20,21 @@ class KnowledgeService:
         try:
             # 1. 向量检索相关文档
             search_results = self.vector_store.search(question, top_k=top_k)
+
+            # 调试输出版：打印检索结果方便排查文档内容
+            try:
+                debug_payload = []
+                for item in search_results:
+                    debug_payload.append({
+                        'id': item.get('id'),
+                        'title': item.get('title'),
+                        'source': item.get('source'),
+                        'score': item.get('score'),
+                        'content': item.get('content')
+                    })
+                print("[KnowledgeService] Retrieved documents:", json.dumps(debug_payload, ensure_ascii=False))
+            except Exception as debug_error:  # noqa: BLE001 - 调试输出不可影响主逻辑
+                print(f"[KnowledgeService] Failed to dump retrieved docs: {debug_error}")
             
             # 2. 构建上下文
             context = self._build_context(search_results)
@@ -30,11 +45,29 @@ class KnowledgeService:
             # 4. 计算置信度
             confidence = self._calculate_confidence(search_results)
             
+            sources_payload = []
+            for result in search_results:
+                snippet = self._build_snippet(result.get('content', ''))
+                raw_source = result.get('source')
+                source_url = (
+                    raw_source
+                    if isinstance(raw_source, str) and raw_source.startswith(("http://", "https://"))
+                    else None
+                )
+                sources_payload.append({
+                    'title': result.get('title') or raw_source,
+                    'url': source_url,
+                    'source': raw_source,
+                    'score': result.get('score'),
+                    'raw_score': result.get('raw_score'),
+                    'snippet': snippet,
+                    'content': result.get('content')
+                })
+
             return {
                 'answer': answer,
                 'context': context,
-                'sources': [{'title': result['title'], 'source': result['source']} 
-                           for result in search_results],
+                'sources': sources_payload,
                 'confidence': confidence
             }
             
@@ -50,7 +83,20 @@ class KnowledgeService:
         """知识库搜索"""
         try:
             results = self.vector_store.search(query, top_k=limit)
-            return results
+            formatted_results = []
+
+            for item in results:
+                formatted_results.append({
+                    'id': item.get('id'),
+                    'title': item.get('title', ''),
+                    'snippet': self._build_snippet(item.get('content', '')),
+                    'score': item.get('score'),
+                    'raw_score': item.get('raw_score'),
+                    'content': item.get('content', ''),
+                    'source': item.get('source')
+                })
+
+            return formatted_results
         except Exception as e:
             print(f"Search error: {e}")
             return []
@@ -88,6 +134,15 @@ class KnowledgeService:
                 'score': result.get('score', 0.0)
             })
         return context
+
+    def _build_snippet(self, text: str, length: int = 200) -> str:
+        """生成简短摘要"""
+        if not text:
+            return ''
+        snippet = text.strip().replace('\n', ' ')
+        if len(snippet) <= length:
+            return snippet
+        return snippet[:length].rstrip() + '...'
     
     def _generate_answer(self, question: str, context: List[Dict[str, Any]]) -> str:
         """基于上下文生成回答"""
@@ -116,9 +171,8 @@ class KnowledgeService:
         # 基于检索结果的相似度分数计算置信度
         scores = [result.get('score', 0.0) for result in search_results]
         avg_score = sum(scores) / len(scores)
-        
-        # 转换为0-1之间的置信度
-        confidence = min(1.0, avg_score)
+
+        confidence = max(0.0, min(1.0, avg_score))
         return confidence
     
     def _build_question_generation_prompt(self, topic: str, difficulty: str, count: int, context: List[Dict[str, Any]]) -> str:

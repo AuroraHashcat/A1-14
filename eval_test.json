@@ -1,0 +1,908 @@
+[
+  {
+    "input": {
+      "scene_id": 1,
+      "system_type": "政务系统",
+      "involved_units": ["网络和通信安全", "应用和数据安全"],
+      "situation_description": "政务外网应用系统的HTTPS证书仍使用自签发证书，未部署经权威CA签发的服务器证书。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "网络和通信安全",
+          "evidence": "服务器HTTPS证书由自签CA颁发，浏览器访问出现安全警告。",
+          "score": 7,
+          "comment": "通信加密配置不符合国家密码应用要求。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "网络和通信安全",
+          "D": {"result": "不符合", "reason": "未使用经权威CA签发证书。"},
+          "A": {"result": "符合", "reason": "通信加密协议版本满足TLS1.2要求。"},
+          "K": {"result": "符合", "reason": "加密算法使用SM2/SM3符合国密要求。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "网络和通信安全",
+          "dak": "D",
+          "description": "使用自签证书，可能导致中间人攻击。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "部署权威CA签发的SSL证书，确保信任链完整。"
+        }
+      ],
+      "scores": {
+        "units": {"网络和通信安全": 7},
+        "total": 7,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "通信安全认证环节存在明显缺陷。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 2,
+      "system_type": "金融核心系统",
+      "involved_units": ["设备和计算安全"],
+      "situation_description": "服务器主机加固到位，禁止了root远程登录并启用多因素认证。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "设备和计算安全",
+          "evidence": "主机配置已禁用root远程登录，采用MFA认证。",
+          "score": 9,
+          "comment": "主机加固措施符合规范要求。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "设备和计算安全",
+          "D": {"result": "符合", "reason": "远程登录受限，最小化风险。"},
+          "A": {"result": "符合", "reason": "认证机制完善。"},
+          "K": {"result": "符合", "reason": "密钥存储与使用符合要求。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"设备和计算安全": 9},
+        "total": 9,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "主机加固措施落实良好，无明显风险。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 3,
+      "system_type": "企业ERP系统",
+      "involved_units": ["应用和数据安全"],
+      "situation_description": "数据库备份文件未加密存储，存放在共享文件夹中，所有内网用户可访问。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "应用和数据安全",
+          "evidence": "ERP数据库备份文件为明文存储，权限为全员可读。",
+          "score": 6,
+          "comment": "数据备份环节存在泄露风险。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "应用和数据安全",
+          "D": {"result": "不符合", "reason": "未加密备份数据。"},
+          "A": {"result": "不符合", "reason": "访问控制缺失。"},
+          "K": {"result": "符合", "reason": "加密算法使用正确但未应用于备份环节。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "应用和数据安全",
+          "dak": "D",
+          "description": "数据库备份文件未加密存储且权限设置不当。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "备份文件应使用SM4算法加密，并限制访问权限至DBA角色。"
+        }
+      ],
+      "scores": {
+        "units": {"应用和数据安全": 6},
+        "total": 6,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "备份安全管理严重不足。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 4,
+      "system_type": "医疗信息系统",
+      "involved_units": ["物理和环境安全"],
+      "situation_description": "机房具备门禁控制与视频监控，进入需登记并刷卡验证。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "物理和环境安全",
+          "evidence": "机房门禁系统运行正常，视频监控保留30天记录。",
+          "score": 9,
+          "comment": "物理安全措施完善，符合安全要求。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "物理和环境安全",
+          "D": {"result": "符合", "reason": "物理访问控制有效。"},
+          "A": {"result": "符合", "reason": "访客登记制度执行到位。"},
+          "K": {"result": "符合", "reason": "环境保护机制完备。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"物理和环境安全": 9},
+        "total": 9,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "现场物理安全措施齐备，无明显隐患。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 5,
+      "system_type": "教育考试系统",
+      "involved_units": ["网络和通信安全"],
+      "situation_description": "考试数据传输使用国密算法SM4加密，但未对API接口请求来源进行身份认证。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "网络和通信安全",
+          "evidence": "数据传输加密但API接口无身份认证机制。",
+          "score": 7,
+          "comment": "通信机密性达标但身份认证存在缺陷。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "网络和通信安全",
+          "D": {"result": "符合", "reason": "使用SM4算法加密传输数据。"},
+          "A": {"result": "不符合", "reason": "API接口缺乏身份认证机制。"},
+          "K": {"result": "符合", "reason": "数据完整性校验机制完善。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "网络和通信安全",
+          "dak": "A",
+          "description": "API接口未对请求来源进行身份认证，存在未授权访问风险。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "为API接口添加基于令牌的身份认证机制，验证请求来源合法性。"
+        }
+      ],
+      "scores": {
+        "units": {"网络和通信安全": 7},
+        "total": 7,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "身份认证机制不完善，存在安全风险。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 6,
+      "system_type": "电力监控系统",
+      "involved_units": ["设备和计算安全"],
+      "situation_description": "操作员工作站未安装防病毒软件，且系统补丁更新滞后超过6个月。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "设备和计算安全",
+          "evidence": "工作站无防病毒防护，系统补丁严重滞后。",
+          "score": 5,
+          "comment": "终端安全防护严重不足。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "设备和计算安全",
+          "D": {"result": "不符合", "reason": "缺乏恶意代码防范措施。"},
+          "A": {"result": "不符合", "reason": "系统漏洞未及时修复。"},
+          "K": {"result": "符合", "reason": "密钥管理符合规范要求。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "设备和计算安全",
+          "dak": "D",
+          "description": "操作员工作站缺乏基本的恶意代码防范能力。"
+        },
+        {
+          "unit_name": "设备和计算安全",
+          "dak": "A",
+          "description": "系统补丁更新严重滞后，存在已知漏洞被利用风险。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "立即部署防病毒软件并确保病毒库定期更新。"
+        },
+        {
+          "problem_ref": 1,
+          "suggestion": "建立系统补丁管理制度，确保关键补丁在30天内完成部署。"
+        }
+      ],
+      "scores": {
+        "units": {"设备和计算安全": 5},
+        "total": 5,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "终端安全防护存在严重缺陷，风险等级高。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 7,
+      "system_type": "社保查询系统",
+      "involved_units": ["应用和数据安全"],
+      "situation_description": "用户敏感信息查询结果在界面完整显示，未进行部分掩码处理。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "应用和数据安全",
+          "evidence": "用户身份证号、手机号等敏感信息在界面完整显示。",
+          "score": 6,
+          "comment": "数据展示环节存在信息泄露风险。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "应用和数据安全",
+          "D": {"result": "不符合", "reason": "敏感信息展示未进行脱敏处理。"},
+          "A": {"result": "符合", "reason": "用户身份认证机制完善。"},
+          "K": {"result": "符合", "reason": "数据存储完整性保护到位。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "应用和数据安全",
+          "dak": "D",
+          "description": "敏感个人信息在查询界面完整展示，违反最小化原则。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "对展示的敏感信息进行掩码处理，如身份证号显示前6位和后4位。"
+        }
+      ],
+      "scores": {
+        "units": {"应用和数据安全": 6},
+        "total": 6,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "数据展示环节存在个人信息泄露风险。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 8,
+      "system_type": "银行支付系统",
+      "involved_units": ["网络和通信安全"],
+      "situation_description": "支付交易使用国密算法SM2进行数字签名，交易流水具备防篡改机制。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "网络和通信安全",
+          "evidence": "支付交易采用SM2数字签名，交易流水具备完整性保护。",
+          "score": 10,
+          "comment": "支付交易安全机制完善，符合金融行业要求。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "网络和通信安全",
+          "D": {"result": "符合", "reason": "交易数据加密传输。"},
+          "A": {"result": "符合", "reason": "SM2数字签名确保交易来源可信。"},
+          "K": {"result": "符合", "reason": "交易流水防篡改机制有效。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"网络和通信安全": 10},
+        "total": 10,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "支付交易各安全环节控制措施完善，无安全隐患。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 9,
+      "system_type": "政务云平台",
+      "involved_units": ["物理和环境安全"],
+      "situation_description": "机房UPS电池超期服役，且近期出现过因电力波动导致的系统重启。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "物理和环境安全",
+          "evidence": "UPS电池超期，近期因电力问题导致系统异常重启。",
+          "score": 4,
+          "comment": "电力保障环节存在严重隐患。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "物理和环境安全",
+          "D": {"result": "不符合", "reason": "电力保障不足影响系统持续运行。"},
+          "A": {"result": "符合", "reason": "物理访问控制有效。"},
+          "K": {"result": "符合", "reason": "环境监控系统运行正常。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "物理和环境安全",
+          "dak": "D",
+          "description": "UPS系统可靠性不足，存在因电力问题导致服务中断的风险。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "立即更换超期UPS电池，并考虑增加冗余UPS系统。"
+        }
+      ],
+      "scores": {
+        "units": {"物理和环境安全": 4},
+        "total": 4,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "基础设施可靠性存在严重缺陷，影响业务连续性。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 10,
+      "system_type": "医院信息系统",
+      "involved_units": ["应用和数据安全"],
+      "situation_description": "电子病历系统采用国密算法对存储的患者病历数据进行加密保护。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "应用和数据安全",
+          "evidence": "电子病历数据使用SM4算法加密存储。",
+          "score": 9,
+          "comment": "患者隐私数据保护措施到位。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "应用和数据安全",
+          "D": {"result": "符合", "reason": "敏感医疗数据加密存储。"},
+          "A": {"result": "符合", "reason": "医务人员身份认证完善。"},
+          "K": {"result": "符合", "reason": "病历数据完整性保护有效。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"应用和数据安全": 9},
+        "total": 9,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "医疗数据安全保护符合相关法规要求。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 11,
+      "system_type": "税务申报系统",
+      "involved_units": ["网络和通信安全"],
+      "situation_description": "纳税人通过Web页面提交的申报表数据在传输过程中使用HTTP明文传输。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "网络和通信安全",
+          "evidence": "申报数据通过HTTP协议明文传输。",
+          "score": 3,
+          "comment": "数据传输安全存在严重缺陷。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "网络和通信安全",
+          "D": {"result": "不符合", "reason": "申报数据明文传输，无加密保护。"},
+          "A": {"result": "不符合", "reason": "缺乏通信双方身份认证。"},
+          "K": {"result": "不符合", "reason": "数据传输过程无完整性校验。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "网络和通信安全",
+          "dak": "D",
+          "description": "纳税人申报数据通过HTTP明文传输，极易被窃取。"
+        },
+        {
+          "unit_name": "网络和通信安全",
+          "dak": "A",
+          "description": "缺乏服务器和客户端的双向身份认证机制。"
+        },
+        {
+          "unit_name": "网络和通信安全",
+          "dak": "K",
+          "description": "数据传输过程缺乏完整性保护，可能被篡改。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "立即启用HTTPS，使用国密SSL证书加密传输通道。"
+        },
+        {
+          "problem_ref": 1,
+          "suggestion": "部署服务器证书并考虑客户端证书认证机制。"
+        },
+        {
+          "problem_ref": 2,
+          "suggestion": "在应用层增加数据签名机制，确保数据完整性。"
+        }
+      ],
+      "scores": {
+        "units": {"网络和通信安全": 3},
+        "total": 3,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "通信安全存在严重缺陷，风险等级极高。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 12,
+      "system_type": "证券交易系统",
+      "involved_units": ["设备和计算安全"],
+      "situation_description": "交易服务器采用国密硬件密码机进行密钥管理和密码运算。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "设备和计算安全",
+          "evidence": "使用国密硬件密码机保障密钥安全。",
+          "score": 10,
+          "comment": "密码设备使用符合最高安全要求。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "设备和计算安全",
+          "D": {"result": "符合", "reason": "硬件密码机提供高安全性的密码运算。"},
+          "A": {"result": "符合", "reason": "设备身份认证机制完善。"},
+          "K": {"result": "符合", "reason": "密钥全生命周期安全管理到位。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"设备和计算安全": 10},
+        "total": 10,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "密码设备配置完善，安全等级高。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 13,
+      "system_type": "政务办公系统",
+      "involved_units": ["应用和数据安全"],
+      "situation_description": "公文流转系统的电子印章使用规范的SM2数字签名技术。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "应用和数据安全",
+          "evidence": "电子印章采用SM2数字签名，验证有效。",
+          "score": 9,
+          "comment": "电子签章安全机制符合规范。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "应用和数据安全",
+          "D": {"result": "符合", "reason": "公文内容加密存储。"},
+          "A": {"result": "符合", "reason": "SM2数字签名确保发文身份可信。"},
+          "K": {"result": "符合", "reason": "数字签名保障公文内容完整性。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"应用和数据安全": 9},
+        "total": 9,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "电子签章应用符合国家密码管理要求。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 14,
+      "system_type": "物流跟踪系统",
+      "involved_units": ["网络和通信安全"],
+      "situation_description": "移动APP与服务器通信使用自定义加密协议，而非标准国密算法。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "网络和通信安全",
+          "evidence": "APP使用自定义加密协议，非国密标准算法。",
+          "score": 4,
+          "comment": "加密算法使用不符合国家密码政策。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "网络和通信安全",
+          "D": {"result": "不符合", "reason": "未使用国家密码管理部门批准的算法。"},
+          "A": {"result": "不符合", "reason": "自定义协议安全性未经专业评估。"},
+          "K": {"result": "不符合", "reason": "完整性保护机制安全性存疑。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "网络和通信安全",
+          "dak": "D",
+          "description": "使用自定义加密协议，违反密码应用安全性要求。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "立即改用国密算法套件，如SM4加密、SM3杂凑、SM2签名。"
+        }
+      ],
+      "scores": {
+        "units": {"网络和通信安全": 4},
+        "total": 4,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "密码算法使用严重违规，安全风险高。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 15,
+      "system_type": "保险核心系统",
+      "involved_units": ["设备和计算安全"],
+      "situation_description": "数据库服务器操作系统口令为8位复杂密码，且每90天强制更换。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "设备和计算安全",
+          "evidence": "数据库服务器口令策略符合复杂度要求。",
+          "score": 9,
+          "comment": "身份鉴别机制完善可靠。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "设备和计算安全",
+          "D": {"result": "符合", "reason": "口令策略有效防止暴力破解。"},
+          "A": {"result": "符合", "reason": "定期更换口令降低泄露风险。"},
+          "K": {"result": "符合", "reason": "密钥管理符合规范要求。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"设备和计算安全": 9},
+        "total": 9,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "身份鉴别安全管理措施到位。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 16,
+      "system_type": "校园一卡通系统",
+      "involved_units": ["应用和数据安全"],
+      "situation_description": "学生消费记录明文存储，且数据库访问日志记录不完整。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "应用和数据安全",
+          "evidence": "消费记录未加密，访问日志缺失。",
+          "score": 5,
+          "comment": "数据安全与审计机制存在缺陷。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "应用和数据安全",
+          "D": {"result": "不符合", "reason": "敏感数据未加密存储。"},
+          "A": {"result": "不符合", "reason": "数据访问行为无法有效追溯。"},
+          "K": {"result": "符合", "reason": "数据存储完整性保护机制有效。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "应用和数据安全",
+          "dak": "D",
+          "description": "学生消费记录等敏感数据明文存储，存在泄露风险。"
+        },
+        {
+          "unit_name": "应用和数据安全",
+          "dak": "A",
+          "description": "数据库访问日志记录不完整，无法有效审计。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "对敏感数据字段进行加密存储，使用SM4算法。"
+        },
+        {
+          "problem_ref": 1,
+          "suggestion": "完善数据库审计策略，确保所有数据访问操作被完整记录。"
+        }
+      ],
+      "scores": {
+        "units": {"应用和数据安全": 5},
+        "total": 5,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "数据安全保护和审计追溯机制不完善。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 17,
+      "system_type": "电信计费系统",
+      "involved_units": ["网络和通信安全"],
+      "situation_description": "计费数据采集接口使用IP白名单限制访问，并采用国密VPN加密传输。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "网络和通信安全",
+          "evidence": "计费接口IP白名单控制，国密VPN加密传输。",
+          "score": 9,
+          "comment": "通信安全控制措施完善有效。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "网络和通信安全",
+          "D": {"result": "符合", "reason": "VPN加密保障数据传输机密性。"},
+          "A": {"result": "符合", "reason": "IP白名单实现网络层访问控制。"},
+          "K": {"result": "符合", "reason": "数据传输完整性保护到位。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"网络和通信安全": 9},
+        "total": 9,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "计费数据通信安全防护措施完善。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 18,
+      "system_type": "财政支付系统",
+      "involved_units": ["设备和计算安全"],
+      "situation_description": "支付审核服务器与数据库服务器网络隔离，仅允许特定端口通信。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "设备和计算安全",
+          "evidence": "服务器间网络隔离，最小化通信权限。",
+          "score": 9,
+          "comment": "网络访问控制策略合理有效。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "设备和计算安全",
+          "D": {"result": "符合", "reason": "网络隔离减少攻击面。"},
+          "A": {"result": "符合", "reason": "访问控制策略完善。"},
+          "K": {"result": "符合", "reason": "系统完整性保护机制有效。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"设备和计算安全": 9},
+        "total": 9,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "系统间访问控制措施完善，安全性高。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 19,
+      "system_type": "公共监控系统",
+      "involved_units": ["物理和环境安全"],
+      "situation_description": "监控中心机房温湿度控制系统故障，近期出现因高温导致的设备自动关机。",
+      "contains_problems": true
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "物理和环境安全",
+          "evidence": "机房温控系统故障，导致设备高温关机。",
+          "score": 3,
+          "comment": "环境安全保障存在严重缺陷。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "物理和环境安全",
+          "D": {"result": "不符合", "reason": "环境保障不足影响系统可用性。"},
+          "A": {"result": "符合", "reason": "物理访问控制有效。"},
+          "K": {"result": "符合", "reason": "设备物理完整性完好。"}
+        }
+      ],
+      "problems": [
+        {
+          "unit_name": "物理和环境安全",
+          "dak": "D",
+          "description": "机房环境控制系统失效，威胁设备稳定运行。"
+        }
+      ],
+      "suggestions": [
+        {
+          "problem_ref": 0,
+          "suggestion": "立即修复温湿度控制系统，并增加冗余环境监控设备。"
+        }
+      ],
+      "scores": {
+        "units": {"物理和环境安全": 3},
+        "total": 3,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "不符合",
+        "reason": "物理环境安全保障严重不足，影响系统连续性。"
+      }
+    }
+  },
+  {
+    "input": {
+      "scene_id": 20,
+      "system_type": "电子商务平台",
+      "involved_units": ["应用和数据安全"],
+      "situation_description": "用户支付密码使用SM3进行杂凑存储，且采用盐值加固防止彩虹表攻击。",
+      "contains_problems": false
+    },
+    "golden_label": {
+      "unit_evaluations": [
+        {
+          "unit_name": "应用和数据安全",
+          "evidence": "支付密码SM3杂凑存储，加盐处理。",
+          "score": 9,
+          "comment": "用户凭证保护机制安全可靠。"
+        }
+      ],
+      "dak_judgement": [
+        {
+          "unit_name": "应用和数据安全",
+          "D": {"result": "符合", "reason": "密码杂凑存储防止明文泄露。"},
+          "A": {"result": "符合", "reason": "用户身份认证机制完善。"},
+          "K": {"result": "符合", "reason": "数据完整性保护有效。"}
+        }
+      ],
+      "problems": [],
+      "suggestions": [],
+      "scores": {
+        "units": {"应用和数据安全": 9},
+        "total": 9,
+        "scoring_method": "依据GB/T 39786评分标准"
+      },
+      "overall_evaluation": {
+        "conclusion": "符合",
+        "reason": "用户敏感信息保护措施完善，符合安全要求。"
+      }
+    }
+  }
+]

@@ -5,7 +5,7 @@
 from app.models import Evaluation, Evidence, Report, db
 from app.services.evidence_service import EvidenceService
 from infrastructure.llm.llm_client import LLMClient
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import json
 
 class EvaluationService:
@@ -15,7 +15,7 @@ class EvaluationService:
         self.evidence_service = EvidenceService()
         self.llm_client = LLMClient()
     
-    def process_evaluation(self, evaluation: Evaluation) -> Dict[str, Any]:
+    def process_evaluation(self, evaluation: Evaluation, overwrite_report_id: Optional[int] = None) -> Dict[str, Any]:
         """处理评测任务"""
         try:
             # 更新状态为处理中
@@ -30,7 +30,7 @@ class EvaluationService:
             analysis_result = self._analyze_evidences(evidences)
             
             # 3. 生成评测报告
-            report = self._generate_report(evaluation, analysis_result)
+            report = self._generate_report(evaluation, analysis_result, overwrite_report_id=overwrite_report_id)
             
             # 4. 更新评测状态
             evaluation.status = 'completed'
@@ -40,6 +40,7 @@ class EvaluationService:
                 'evaluation_id': evaluation.id,
                 'status': 'completed',
                 'report_id': report.id,
+                'report_score': report.score,
                 'analysis': analysis_result
             }
             
@@ -57,17 +58,18 @@ class EvaluationService:
     def _analyze_evidences(self, evidences: List[Evidence]) -> Dict[str, Any]:
         """分析证据内容"""
         # 收集所有文本内容
-        all_text = []
+        compiled_evidence: List[Dict[str, Any]] = []
         for evidence in evidences:
             if evidence.extracted_text:
-                all_text.append({
+                compiled_evidence.append({
                     'filename': evidence.original_filename,
                     'text': evidence.extracted_text,
-                    'metadata': evidence.metadata
+                    'summary': evidence.key_summary or '',
+                    'metadata': evidence.evidence_metadata or {}
                 })
-        
+
         # 使用大模型分析
-        analysis_prompt = self._build_analysis_prompt(all_text)
+        analysis_prompt = self._build_analysis_prompt(compiled_evidence)
         analysis_result = self.llm_client.generate(analysis_prompt)
         
         try:
@@ -79,8 +81,15 @@ class EvaluationService:
         
         return {
             'evidences_count': len(evidences),
-            'total_text_length': sum(len(item['text']) for item in all_text),
-            'analysis': parsed_result
+            'total_text_length': sum(len(item['text']) for item in compiled_evidence),
+            'analysis': parsed_result,
+            'evidence_summaries': [
+                {
+                    'filename': item['filename'],
+                    'summary': item['summary']
+                }
+                for item in compiled_evidence
+            ]
         }
     
     def _build_analysis_prompt(self, text_data: List[Dict[str, Any]]) -> str:
@@ -89,10 +98,15 @@ class EvaluationService:
 
 证据文件：
 """
-        
+
         for item in text_data:
             prompt += f"\n文件名: {item['filename']}\n"
-            prompt += f"内容: {item['text'][:2000]}...\n"  # 限制长度
+            summary = item.get('summary') or '暂无总结。'
+            prompt += "关键信息总结:\n"
+            prompt += f"{summary}\n"
+            snippet = item['text'][:1500]
+            prompt += "原文摘录:\n"
+            prompt += f"{snippet}\n"
             prompt += "---\n"
         
         prompt += """
@@ -107,7 +121,7 @@ class EvaluationService:
 """
         return prompt
     
-    def _generate_report(self, evaluation: Evaluation, analysis: Dict[str, Any]) -> Report:
+    def _generate_report(self, evaluation: Evaluation, analysis: Dict[str, Any], overwrite_report_id: Optional[int] = None) -> Report:
         """生成评测报告"""
         # 构建报告生成提示词
         report_prompt = f"""
@@ -140,19 +154,42 @@ class EvaluationService:
         # 计算评分（简化逻辑）
         score = self._calculate_score(analysis)
         
-        # 创建报告记录
-        report = Report(
-            title=f"{evaluation.title} - 评测报告",
-            content=report_content,
-            summary=summary,
-            score=score,
-            evaluation_id=evaluation.id,
-            recommendations=analysis.get('analysis', {}).get('recommendations', [])
-        )
-        
-        db.session.add(report)
+        if overwrite_report_id:
+            # 覆盖已有报告
+            report = Report.query.get(overwrite_report_id)
+            if not report:
+                # 如果未找到指定报告，退回到创建新报告
+                report = Report(
+                    title=f"{evaluation.title} - 评测报告",
+                    content=report_content,
+                    summary=summary,
+                    score=score,
+                    evaluation_id=evaluation.id,
+                    recommendations=analysis.get('analysis', {}).get('recommendations', [])
+                )
+                db.session.add(report)
+            else:
+                report.title = f"{evaluation.title} - 评测报告"
+                report.content = report_content
+                report.summary = summary
+                report.score = score
+                report.evaluation_id = evaluation.id
+                report.recommendations = analysis.get('analysis', {}).get('recommendations', [])
+                # SQLAlchemy will track changes; ensure updated_at is refreshed if model uses timestamps
+        else:
+            # 创建新报告记录
+            report = Report(
+                title=f"{evaluation.title} - 评测报告",
+                content=report_content,
+                summary=summary,
+                score=score,
+                evaluation_id=evaluation.id,
+                recommendations=analysis.get('analysis', {}).get('recommendations', [])
+            )
+            db.session.add(report)
+
         db.session.commit()
-        
+
         return report
     
     def _calculate_score(self, analysis: Dict[str, Any]) -> float:

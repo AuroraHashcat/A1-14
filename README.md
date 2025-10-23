@@ -1,40 +1,20 @@
-# 密码学评测系统 (Cryptographic Evaluation System)
+# A1-14 商用密码测评辅助系统
 
-## 🎯 项目概述
+## 简要说明
 
-这是一个基于大模型和GMT标准的智能化密码学产品评测平台，旨在自动化处理密码学产品的测评、审核和认证流程。系统集成了先进的AI技术，能够自动识别证据文件、进行智能判定、生成专业报告，并提供知识库问答服务。
+本项目基于大模型（LLM）与知识增强检索（RAG），构建自动化的商用密码测评辅助平台，支持证据多模态解析、知识检索增强推理、可控结构化LLM推理、规则化评分与结构化报告生成，具备自动化与人工复核的全流程质量保证能力，适用于研究、竞赛与产品化部署场景。
 
-## 🏗️ 系统架构
+## 🚀 主要功能
 
-### � 交互层 (Web Interface Layer)
-- **Web前端界面**: 现代化的用户界面，支持文件上传、查询输入、报告展示
-- **RESTful API**: 完整的API接口，支持所有核心功能
+- **证据处理**：批量上传、PDF/OCR解析与证据归一化。
+- **知识检索（RAG）**：文档向量化、向量检索并为LLM拼接检索上下文。
+- **LLM 集成**：统一的 LLM 客户端（`infrastructure/llm/llm_client.py`），支持结构化输出、容错解析与报告评审（`judge_evaluation`、`review_report`）。
+- **报告生成**：自动生成结构化密评报告（单元评分、DAK判定、问题/建议、总体评价，总分<=100）。
+- **评审与质量保证**：评审模块支持辅助评审（系统生成报告的内控）与独立评审（人工报告的自动化校验），输出结构化评审意见与修正建议。
+- **题库服务**：基于知识库自动生成带解析的选择题（见 `app/services/knowledge_service.py`）。
+- **测试与分析**：`test.py` 支持批量评测与结果分析（MAE、RMSE、Pearson、正确率等）。
 
-### 🧠 应用层 (Application Layer)
-- **证据识别模块**: 智能处理图片、PDF、Word等格式，提取关键信息
-- **智能判定模块**: 基于GMT标准的自动化评测和合规性判定
-- **报告评审模块**: 自动化报告格式检查和内容验证
-- **知识库模块**: 智能问答系统和自动题目生成
-
-### ⚙️ 支撑层 (Infrastructure Layer)
-- **大模型引擎**: 集成deepinfra API，使用qwen-2.5-72B模型
-- **向量数据库**: ChromaDB存储GMT标准文档和历史案例
-- **业务数据库**: SQLAlchemy管理用户、任务、报告等数据
-
-## 🛠️ 技术栈
-
-| 层级 | 技术选型 | 说明 |
-|------|----------|------|
-| 后端框架 | Python Flask | 轻量级Web框架，易于扩展 |
-| 数据库 | SQLite/PostgreSQL | 开发使用SQLite，生产推荐PostgreSQL |
-| 向量数据库 | ChromaDB | 高性能向量存储和检索 |
-| 大模型 | qwen-2.5-72B | 通过deepinfra API调用 |
-| 文档处理 | PyMuPDF, python-docx | 支持多种文档格式 |
-| OCR引擎 | EasyOCR | 中英文OCR识别 |
-| 向量化 | SentenceTransformers | 文本向量化处理 |
-| 前端 | Bootstrap 5 + Vanilla JS | 响应式现代UI |
-
-## 📁 项目结构
+## 🏗️ 项目结构（重点）
 
 ```
 A1-14/                          # 项目根目录
@@ -195,21 +175,15 @@ python run.py
 
 ## 🤝 贡献指南
 
-1. Fork 项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+欢迎通过 issue 或 PR 贡献代码。请在提交前运行本地测试并遵循项目代码风格（PEP8）。
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+上传前请根据组织要求添加合适许可证（如 MIT、Apache-2.0）。
 
 ## 📞 联系我们
 
-- 项目主页: [GitHub Repository]
-- 问题报告: [Issues]
-- 文档站点: [Documentation]
+如需协作或技术支持，请在仓库中提交 issue 或联系项目维护者。
 
 ---
 

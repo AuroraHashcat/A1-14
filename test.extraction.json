@@ -1,0 +1,77 @@
+{
+  "application_form": {
+    "unit_information": {
+      "unit_name": "北京智慧城市科技发展有限公司",
+      "unit_address": "北京市海淀区中关村南大街 5 号智慧大厦 15 层",
+      "provincial_password_authority": "北京市密码管理局",
+      "postal_code": "100081"
+    },
+    "contact_information": {
+      "name": "张明",
+      "department": "技术研发部",
+      "mobile_phone": "13811112222",
+      "title_position": "高级项目经理",
+      "office_phone": "010-88887777",
+      "email": "zhangming@bjcitytech.com"
+    },
+    "information_system": {
+      "system_name": "智慧城市政务数据管理系统",
+      "is_critical_infrastructure": true,
+      "critical_infrastructure_status": {
+        "identified": true,
+        "governing_department": "北京市政务服务管理局",
+        "unidentified": false
+      },
+      "classification_status": {
+        "has_classified": true,
+        "level": "第三级",
+        "filing_certificate_number": "110108-GA2024-0056",
+        "is_consistent_with_tested": true,
+        "change_description": "无变化",
+        "not_classified": false,
+        "evaluation_basis": "《信息安全技术 信息系统安全等级保护基本要求》GB/T 22239-2019"
+      },
+      "cybersecurity_evaluation": {
+        "status": "已测评",
+        "evaluation_org_name": "北京国信安全测评中心",
+        "evaluation_time": "2024 年 3 月 10 日 - 3 月 15 日",
+        "evaluation_conclusion": "系统符合信息安全等级保护第三级要求，安全防护措施有效，无高危安全漏洞，可正常投入使用。"
+      },
+      "cryptography_assessment": {
+        "status": "正在评估",
+        "assessment_org_name": "国家密码管理局商用密码检测中心",
+        "assessment_time": "预计 2024 年 6 月完成",
+        "assessment_conclusion": "暂未出具（待复测完成后 5 个工作日内出具正式报告）"
+      },
+      "cloud_platform_dependency": {
+        "has_dependency": true,
+        "platform_name": "阿里云政务云北京节点",
+        "platform_assessment_status": "云平台已评估",
+        "assessment_org_name": "国家密码管理局商用密码检测中心",
+        "assessment_time": "2023 年 11 月 20 日",
+        "assessment_conclusion": "云平台密码应用符合《信息安全技术 云计算服务安全指南》及商用密码相关标准，可支撑三级及以下信息系统运行，密码算法使用合规，密钥管理机制安全。"
+      }
+    },
+    "assessment_agency": {
+      "agency_name": "国家密码管理局商用密码检测中心",
+      "agency_address": "北京市西城区复兴门内大街 2 号",
+      "postal_code": "100031",
+      "contact_person": {
+        "name": "李华",
+        "department": "检测评估部",
+        "mobile_phone": "13933334444",
+        "title_position": "高级工程师",
+        "office_phone": "010-66665555",
+        "email": "lihua@scctc.org.cn"
+      },
+      "document_metadata": {
+        "prepared_by": "王磊",
+        "preparation_date": "2024-04-15",
+        "reviewed_by": "赵刚",
+        "review_date": "2024-04-18",
+        "approved_by": "孙强",
+        "approval_date": "2024-04-20"
+      }
+    }
+  }
+}

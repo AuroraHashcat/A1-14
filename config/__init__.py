@@ -13,6 +13,9 @@ class Config:
     
     # Flask基础配置
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME', 'crypto_eval_session')
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
     
     # 数据库配置
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///crypto_eval.db'
@@ -30,6 +33,13 @@ class Config:
     # 向量数据库配置
     CHROMA_PERSIST_DIRECTORY = os.environ.get('CHROMA_PERSIST_DIRECTORY') or './data/chroma_db'
     EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL') or 'sentence-transformers/all-MiniLM-L6-v2'
+
+    # CORS配置
+    _cors_origins = os.environ.get('CORS_ORIGINS')
+    if _cors_origins:
+        CORS_ORIGINS = [origin.strip() for origin in _cors_origins.split(',') if origin.strip()]
+    else:
+        CORS_ORIGINS = ['http://localhost:5173']
     
     # 日志配置
     LOG_LEVEL = os.environ.get('LOG_LEVEL') or 'INFO'

@@ -2,10 +2,11 @@
 知识库查询API
 """
 
-from flask import request, jsonify
+from flask import request, jsonify, send_file
 from app.api import bp
 from app.models import Query, db
 from app.services.knowledge_service import KnowledgeService
+from app.services.export_service import build_question_bank_docx
 
 @bp.route('/knowledge/query', methods=['POST'])
 def query_knowledge():
@@ -115,3 +116,27 @@ def generate_questions():
             'success': False,
             'error': str(e)
         }), 500
+
+
+@bp.route('/knowledge/questions/export', methods=['POST'])
+def export_question_bank():
+    """导出题库为 Word 文档。"""
+    try:
+        data = request.json or {}
+        topic = data.get('topic', '').strip()
+        difficulty = data.get('difficulty', 'medium')
+        questions = data.get('questions', [])
+
+        if not questions or not isinstance(questions, list):
+            return jsonify({'success': False, 'error': '题目列表不能为空'}), 400
+
+        buffer, filename = build_question_bank_docx(topic, difficulty, questions)
+        return send_file(
+            buffer,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=True,
+            download_name=filename,
+        )
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

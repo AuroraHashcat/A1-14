@@ -1,14 +1,22 @@
-"""
-向量数据库存储
-"""
+"""向量数据库存储"""
 
 import os
-import chromadb
-from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
-from typing import List, Dict, Any, Optional
-from config import Config
 import uuid
+from typing import Any, Dict, List, Optional
+
+import chromadb
+import numpy as np
+from sentence_transformers import SentenceTransformer
+
+from config import Config
+
+
+os.environ.setdefault("CHROMA_TELEMETRY_ENABLED", "false")  # avoid telemetry spam
+
+if not hasattr(np, "NaN"):
+    # Chroma still references numpy.NaN; rebuild alias for numpy>=2.0
+    np.NaN = np.nan  # type: ignore[attr-defined]
+
 
 class VectorStore:
     """向量数据库存储"""
@@ -32,12 +40,14 @@ class VectorStore:
             metadata={"description": "GMT密码学标准知识库"}
         )
     
-    def add_document(self, 
-                    title: str, 
-                    content: str, 
-                    source: str,
-                    category: str = "standard",
-                    metadata: Optional[Dict[str, Any]] = None) -> str:
+    def add_document(
+        self,
+        title: str,
+        content: str,
+        source: str,
+        category: str = "standard",
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """添加文档到向量库"""
         try:
             # 生成嵌入向量
@@ -126,10 +136,18 @@ class VectorStore:
             
             if results['documents'] and results['documents'][0]:
                 for i in range(len(results['documents'][0])):
+                    distance_matrix = results.get('distances') or [[]]
+                    distance_row = distance_matrix[0] if distance_matrix else []
+                    distance = distance_row[i] if i < len(distance_row) else None
+                    cosine_similarity = 1 - distance if distance is not None else 0.0
+                    normalized_score = (cosine_similarity + 1) / 2
+                    score = max(0.0, min(normalized_score, 1.0))
+
                     result = {
                         'id': results['ids'][0][i],
                         'content': results['documents'][0][i],
-                        'score': 1 - results['distances'][0][i],  # 转换为相似度分数
+                        'score': score,
+                        'raw_score': cosine_similarity,
                         'metadata': results['metadatas'][0][i]
                     }
                     

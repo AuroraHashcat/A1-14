@@ -12,7 +12,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from app import create_app, db
-from app.models import User, Evaluation, Evidence, Report, KnowledgeItem, Query
+from app.models import User, Evaluation, Evidence, Report, KnowledgeItem, Query, System, SystemPreparation
+from app.services.system_service import ensure_default_system_for_user
 from werkzeug.security import generate_password_hash
 import uuid
 
@@ -30,9 +31,16 @@ def init_database():
         # 创建所有表
         db.create_all()
         print("✅ 已创建数据表")
+
+        ensure_default_system_for_user(None)
+        print("✅ 已确保平台默认测评系统存在")
         
         # 创建默认用户
-        create_default_users()
+        user_ids = create_default_users()
+
+        for user_id in user_ids:
+            ensure_default_system_for_user(user_id)
+        print("✅ 已为默认用户创建专属默认测评系统")
         
         # 创建示例数据
         create_sample_data()
@@ -59,13 +67,24 @@ def create_default_users():
         is_active=True
     )
     
+    demo_user = User(
+        username='demo_user',
+        email='demo@crypto-eval.com',
+        password_hash=generate_password_hash('Demo@123'),
+        is_active=True
+    )
+
     db.session.add(admin_user)
     db.session.add(test_user)
+    db.session.add(demo_user)
     db.session.commit()
     
     print("✅ 已创建默认用户:")
     print("   - admin/admin123 (管理员)")
     print("   - test/test123 (测试用户)")
+    print("   - demo_user/Demo@123 (示范账号)")
+
+    return [admin_user.id, test_user.id, demo_user.id]
 
 def create_sample_data():
     """创建示例数据"""

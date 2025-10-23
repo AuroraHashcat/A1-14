@@ -2,7 +2,7 @@
 评测相关API
 """
 
-from flask import request, jsonify, current_app
+from flask import request, jsonify, session
 from app.api import bp
 from app.models import Evaluation, db
 from app.services.evaluation_service import EvaluationService
@@ -12,7 +12,11 @@ import uuid
 def get_evaluations():
     """获取评测列表"""
     try:
-        evaluations = Evaluation.query.all()
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': '未登录'}), 401
+
+        evaluations = Evaluation.query.filter_by(user_id=user_id).all()
         return jsonify({
             'success': True,
             'data': [{
@@ -35,7 +39,11 @@ def get_evaluations():
 def create_evaluation():
     """创建新的评测任务"""
     try:
-        data = request.json
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': '未登录'}), 401
+
+        data = request.get_json(silent=True) or request.form
         
         # 验证必填字段
         if not data.get('title'):
@@ -49,7 +57,7 @@ def create_evaluation():
             uuid=str(uuid.uuid4()),
             title=data['title'],
             description=data.get('description', ''),
-            user_id=1  # 暂时硬编码，后续添加用户认证
+            user_id=user_id
         )
         
         db.session.add(evaluation)
@@ -76,7 +84,13 @@ def create_evaluation():
 def get_evaluation(eval_id):
     """获取单个评测任务详情"""
     try:
-        evaluation = Evaluation.query.get_or_404(eval_id)
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': '未登录'}), 401
+
+        evaluation = Evaluation.query.filter_by(id=eval_id, user_id=user_id).first()
+        if not evaluation:
+            return jsonify({'success': False, 'error': '评测不存在'}), 404
         
         return jsonify({
             'success': True,
@@ -103,7 +117,13 @@ def get_evaluation(eval_id):
 def process_evaluation(eval_id):
     """开始处理评测任务"""
     try:
-        evaluation = Evaluation.query.get_or_404(eval_id)
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': '未登录'}), 401
+
+        evaluation = Evaluation.query.filter_by(id=eval_id, user_id=user_id).first()
+        if not evaluation:
+            return jsonify({'success': False, 'error': '评测不存在'}), 404
         
         if evaluation.status != 'pending':
             return jsonify({

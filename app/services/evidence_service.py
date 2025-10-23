@@ -1,184 +1,196 @@
-"""
-证据处理服务
-"""
+"""证据处理服务（支持单个与批量证据文件内容抽取）"""
 
-import os
-import fitz  # PyMuPDF
-from PIL import Image
-import easyocr
-from docx import Document
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
+
+from flask import current_app
+
 from app.models import Evidence, db
-from typing import Optional, Dict, Any
-import json
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from app.services.constants import EVIDENCE_SUMMARY_PROMPT
+from app.services.file_reader import read_document
+from infrastructure.llm.llm_client import LLMClient
+
 
 class EvidenceService:
-    """证据文件处理服务"""
-    
+    """证据文件处理服务（整合文件读取与模型抽取流程）"""
+
     def __init__(self):
-        self.ocr_reader = None
-        self.executor = ThreadPoolExecutor(max_workers=2)
-    
-    def _get_ocr_reader(self):
-        """延迟初始化OCR读取器"""
-        if self.ocr_reader is None:
-            self.ocr_reader = easyocr.Reader(['ch_sim', 'en'])
-        return self.ocr_reader
-    
+        # 创建线程池，用于并行执行 OCR / 模型抽取等任务
+        # max_workers 可根据 CPU 核数与任务复杂度调整
+        self.executor = ThreadPoolExecutor(max_workers=4)
+        self.llm_client = LLMClient()
+
+    def _submit_with_context(self, func, *args, **kwargs):
+        """在线程池中执行任务时保留 Flask 应用上下文。"""
+        app = current_app._get_current_object()
+
+        def _runner():
+            with app.app_context():
+                return func(*args, **kwargs)
+
+        return self.executor.submit(_runner)
+
+    # =============================================================
+    # 单文件抽取逻辑
+    # =============================================================
     def extract_content(self, evidence_id: int) -> Dict[str, Any]:
-        """提取证据文件内容"""
+        """
+        提取单个证据文件内容，并调用模型进行信息抽取。
+
+        Args:
+            evidence_id (int): Evidence 数据库记录 ID。
+
+        Returns:
+            dict: 包含抽取结果、成功标志、输出文件路径等信息。
+        """
+        # Step 0: 查询数据库中的 Evidence 记录
         evidence = Evidence.query.get(evidence_id)
         if not evidence:
             raise ValueError(f"Evidence with id {evidence_id} not found")
-        
+
         try:
-            # 根据文件类型选择处理方法
-            if evidence.file_type.startswith('image/'):
-                extracted_text = self._extract_from_image(evidence.file_path)
-                metadata = self._get_image_metadata(evidence.file_path)
-            elif evidence.file_type == 'application/pdf':
-                extracted_text = self._extract_from_pdf(evidence.file_path)
-                metadata = self._get_pdf_metadata(evidence.file_path)
-            elif evidence.file_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-                extracted_text = self._extract_from_docx(evidence.file_path)
-                metadata = self._get_docx_metadata(evidence.file_path)
-            else:
-                extracted_text = ""
-                metadata = {}
-            
-            # 更新数据库
-            evidence.extracted_text = extracted_text
-            evidence.metadata = metadata
-            db.session.commit()
-            
-            return {
-                'evidence_id': evidence_id,
-                'extracted_text': extracted_text,
-                'metadata': metadata,
-                'success': True
-            }
-            
-        except Exception as e:
-            return {
-                'evidence_id': evidence_id,
-                'error': str(e),
-                'success': False
-            }
-    
-    def extract_content_async(self, evidence_id: int):
-        """异步提取证据文件内容"""
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        future = self.executor.submit(self.extract_content, evidence_id)
-        return future
-    
-    def _extract_from_image(self, file_path: str) -> str:
-        """从图片中提取文本"""
-        try:
-            ocr_reader = self._get_ocr_reader()
-            results = ocr_reader.readtext(file_path)
-            
-            # 合并OCR结果
-            text_lines = []
-            for (bbox, text, confidence) in results:
-                if confidence > 0.5:  # 置信度阈值
-                    text_lines.append(text)
-            
-            return '\n'.join(text_lines)
-            
-        except Exception as e:
-            print(f"OCR extraction error: {e}")
-            return ""
-    
-    def _extract_from_pdf(self, file_path: str) -> str:
-        """从PDF中提取文本"""
-        try:
-            doc = fitz.open(file_path)
-            text_content = []
-            
-            for page_num in range(len(doc)):
-                page = doc.load_page(page_num)
-                text = page.get_text()
-                text_content.append(text)
-            
-            doc.close()
-            return '\n'.join(text_content)
-            
-        except Exception as e:
-            print(f"PDF extraction error: {e}")
-            return ""
-    
-    def _extract_from_docx(self, file_path: str) -> str:
-        """从Word文档中提取文本"""
-        try:
-            doc = Document(file_path)
-            text_content = []
-            
-            for paragraph in doc.paragraphs:
-                text_content.append(paragraph.text)
-            
-            return '\n'.join(text_content)
-            
-        except Exception as e:
-            print(f"DOCX extraction error: {e}")
-            return ""
-    
-    def _get_image_metadata(self, file_path: str) -> Dict[str, Any]:
-        """获取图片元数据"""
-        try:
-            with Image.open(file_path) as img:
-                return {
-                    'format': img.format,
-                    'mode': img.mode,
-                    'size': img.size,
-                    'has_exif': bool(getattr(img, '_getexif', None))
+            input_path = Path(evidence.file_path)
+
+            # Step 1: 读取文件原文
+            source_text = read_document(input_path) or ""
+            source_text = source_text if isinstance(source_text, str) else str(source_text)
+
+            # Step 2: 生成关键信息总结
+            summary_text = self._summarize_for_mipeval(source_text)
+
+            # Step 3: 更新数据库记录
+            metadata = evidence.evidence_metadata or {}
+            if not isinstance(metadata, dict):
+                metadata = {"_legacy": metadata}
+            metadata.update(
+                {
+                    "summaryModel": getattr(self.llm_client, "model_name", "unknown"),
+                    "summaryGeneratedAt": datetime.utcnow().isoformat() + "Z",
+                    "rawTextLength": len(source_text or ""),
                 }
-        except:
-            return {}
-    
-    def _get_pdf_metadata(self, file_path: str) -> Dict[str, Any]:
-        """获取PDF元数据"""
-        try:
-            doc = fitz.open(file_path)
-            metadata = doc.metadata
-            page_count = len(doc)
-            doc.close()
-            
+            )
+
+            evidence.extracted_text = source_text
+            evidence.key_summary = summary_text
+            evidence.evidence_metadata = metadata
+            db.session.commit()
+
+            # Step 4: 返回成功结果
             return {
-                'page_count': page_count,
-                'title': metadata.get('title', ''),
-                'author': metadata.get('author', ''),
-                'creator': metadata.get('creator', ''),
-                'producer': metadata.get('producer', ''),
-                'creation_date': metadata.get('creationDate', ''),
-                'modification_date': metadata.get('modDate', '')
+                "evidence_id": evidence_id,
+                "text": source_text,
+                "summary": summary_text,
+                "metadata": metadata,
+                "success": True,
             }
-        except:
-            return {}
-    
-    def _get_docx_metadata(self, file_path: str) -> Dict[str, Any]:
-        """获取Word文档元数据"""
-        try:
-            doc = Document(file_path)
-            core_props = doc.core_properties
-            
+
+        except Exception as e:
+            # 捕获异常，保证单个文件出错不会影响批处理
             return {
-                'author': core_props.author or '',
-                'category': core_props.category or '',
-                'comments': core_props.comments or '',
-                'content_status': core_props.content_status or '',
-                'created': core_props.created.isoformat() if core_props.created else '',
-                'identifier': core_props.identifier or '',
-                'keywords': core_props.keywords or '',
-                'language': core_props.language or '',
-                'last_modified_by': core_props.last_modified_by or '',
-                'last_printed': core_props.last_printed.isoformat() if core_props.last_printed else '',
-                'modified': core_props.modified.isoformat() if core_props.modified else '',
-                'revision': core_props.revision,
-                'subject': core_props.subject or '',
-                'title': core_props.title or '',
-                'version': core_props.version or ''
+                "evidence_id": evidence_id,
+                "error": str(e),
+                "success": False
             }
-        except:
-            return {}
+
+    def _summarize_for_mipeval(self, source_text: str) -> str:
+        """调用大模型生成面向密评的关键信息总结。"""
+        cleaned_text = (source_text or "").strip()
+        if not cleaned_text:
+            return "原始文本为空，未生成总结。"
+
+        max_chars = 8000
+        truncated = cleaned_text[:max_chars]
+        if len(cleaned_text) > max_chars:
+            truncated += "\n\n【提示】原文已截断，仅保留前 8000 个字符用于生成摘要。"
+
+        prompt = f"{EVIDENCE_SUMMARY_PROMPT}\n\n【证据原文摘录】\n{truncated}"
+
+        try:
+            return self.llm_client.generate(prompt, max_tokens=1200, temperature=0.2)
+        except Exception as exc:  # noqa: BLE001
+            current_app.logger.exception("生成证据摘要失败：%s", exc)
+            return "自动摘要失败，请复核证据原文。"
+
+    # =============================================================
+    # 批量同步抽取逻辑
+    # =============================================================
+    def extract_batch(self, evidence_ids: List[int]) -> Dict[str, Any]:
+        """
+        批量提取多个证据文件内容（同步方式）。
+
+        Args:
+            evidence_ids (List[int]): 待处理的 Evidence 记录 ID 列表。
+
+        Returns:
+            dict: 汇总结果，包括总数、成功数、失败数、各项结果明细。
+        """
+        results = []
+
+        # 顺序执行，每个文件单独抽取
+        for eid in evidence_ids:
+            result = self.extract_content(eid)
+            results.append(result)
+
+        # 汇总统计结果
+        summary = {
+            "total": len(evidence_ids),                           # 总文件数
+            "success": sum(1 for r in results if r["success"]),    # 成功数量
+            "failed": sum(1 for r in results if not r["success"]), # 失败数量
+            "results": results                                     # 每个文件的详细结果
+        }
+        return summary
+
+    # =============================================================
+    # 批量异步抽取逻辑（推荐用于大批量文件）
+    # =============================================================
+    def extract_content_async(self, evidence_id: int):
+        """异步提取单个证据文件内容，确保拥有应用上下文。"""
+        return self._submit_with_context(self.extract_content, evidence_id)
+
+    def extract_batch_async(self, evidence_ids: List[int]):
+        """
+        异步批量执行抽取任务（并发执行）。
+
+        每个文件在独立线程中运行，不会相互阻塞。
+        返回一个 Future 对象，可在外部通过 future.result() 获取结果。
+
+        Args:
+            evidence_ids (List[int]): 待处理的 Evidence 记录 ID 列表。
+
+        Returns:
+            concurrent.futures.Future: 异步任务结果。
+        """
+        # 将每个文件抽取任务提交给线程池
+        futures = {self._submit_with_context(self.extract_content, eid): eid for eid in evidence_ids}
+
+        def _collect_results():
+            """
+            内部函数：收集所有 Future 执行结果并汇总统计。
+            """
+            results = []
+            for future in as_completed(futures):
+                eid = futures[future]
+                try:
+                    # 等待单个任务执行完成
+                    results.append(future.result())
+                except Exception as e:
+                    # 捕获线程中异常，防止任务中断
+                    results.append({
+                        "evidence_id": eid,
+                        "error": str(e),
+                        "success": False
+                    })
+
+            # 汇总最终统计结果
+            summary = {
+                "total": len(evidence_ids),
+                "success": sum(1 for r in results if r["success"]),
+                "failed": sum(1 for r in results if not r["success"]),
+                "results": results
+            }
+            return summary
+
+        # 提交聚合任务，返回 Future（可等待）
+        return self.executor.submit(_collect_results)

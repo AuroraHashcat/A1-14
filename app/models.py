@@ -3,9 +3,10 @@
 """
 
 from datetime import datetime
+import uuid
+
 from app import db
 from sqlalchemy.dialects.postgresql import UUID
-import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
@@ -21,6 +22,7 @@ class User(db.Model):
     
     # 关系
     evaluations = db.relationship('Evaluation', backref='user', lazy='dynamic')
+    systems = db.relationship('System', backref='owner_user', lazy='dynamic')
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -30,6 +32,42 @@ class User(db.Model):
         
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+
+class System(db.Model):
+    """测评系统模型"""
+
+    __tablename__ = 'systems'
+    __table_args__ = (
+        db.UniqueConstraint('owner_id', 'name', name='uq_system_owner_name'),
+    )
+
+    id = db.Column(db.String(32), primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    code = db.Column(db.String(64))
+    level = db.Column(db.String(64))
+    owner = db.Column(db.String(120))
+    description = db.Column(db.Text)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    preparation = db.relationship('SystemPreparation', backref='system', uselist=False, cascade='all, delete-orphan')
+    evaluations = db.relationship('Evaluation', backref='system', lazy='dynamic', cascade='all, delete-orphan')
+    evidences = db.relationship('Evidence', backref='system', lazy='dynamic', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<System {self.name}>'
+
+
+class SystemPreparation(db.Model):
+    """测评准备信息"""
+
+    __tablename__ = 'system_preparations'
+
+    system_id = db.Column(db.String(32), db.ForeignKey('systems.id'), primary_key=True)
+    data = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Evaluation(db.Model):
     """评测任务模型"""
@@ -45,6 +83,7 @@ class Evaluation(db.Model):
     
     # 外键
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    system_id = db.Column(db.String(32), db.ForeignKey('systems.id'), nullable=True)
     
     # 关系
     evidences = db.relationship('Evidence', backref='evaluation', lazy='dynamic', cascade='all, delete-orphan')
@@ -64,11 +103,13 @@ class Evidence(db.Model):
     file_type = db.Column(db.String(50))  # image, pdf, docx, etc.
     file_size = db.Column(db.Integer)
     extracted_text = db.Column(db.Text)  # OCR或文档解析结果
+    key_summary = db.Column(db.Text)  # 面向密评的关键信息总结
     evidence_metadata = db.Column(db.JSON)  # 文件元数据（原名 metadata，避免SQLAlchemy保留字冲突）
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # 外键
-    evaluation_id = db.Column(db.Integer, db.ForeignKey('evaluations.id'), nullable=False)
+    evaluation_id = db.Column(db.Integer, db.ForeignKey('evaluations.id'), nullable=True)
+    system_id = db.Column(db.String(32), db.ForeignKey('systems.id'), nullable=False)
     
     def __repr__(self):
         return f'<Evidence {self.original_filename}>'
